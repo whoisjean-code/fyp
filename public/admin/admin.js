@@ -548,7 +548,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = document.createElement('div');
                 card.className = 'property-card glass';
                 card.innerHTML = `
-                    <video src="${vid.video_url}" class="property-img" autoplay muted loop playsinline></video>
+                    <div class="card-img-wrapper">
+                        <video src="${vid.video_url}" class="property-img" autoplay muted loop playsinline></video>
+                    </div>
                     <div class="property-info">
                         <h4 class="property-title">${vid.title}</h4>
                         <div class="card-actions">
