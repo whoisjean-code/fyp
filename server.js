@@ -16,13 +16,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'elite_super_secret_key_2026';
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, 'public', 'uploads');
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, 'public', 'uploads'));
+        cb(null, uploadsDir);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -31,7 +30,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) {
             cb(null, true);
@@ -41,11 +40,30 @@ const upload = multer({
     }
 });
 
+// Middleware to handle Multer errors gracefully
+const handleUploadError = (err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ error: 'El archivo es demasiado pesado. El límite es 50MB.' });
+        }
+        return res.status(400).json({ error: err.message });
+    } else if (err) {
+        return res.status(400).json({ error: err.message });
+    }
+    next();
+};
+
 // Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(uploadsDir));
+
+// Enable the error handler globally after the upload middleware, or we can just apply it app-wide.
+app.use(handleUploadError);
 
 // ═══════════════════════════════════════════════════════════
 // AUTH
