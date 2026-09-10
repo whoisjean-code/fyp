@@ -62,9 +62,6 @@ if (!fs.existsSync(uploadsDir)){
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadsDir));
 
-// Enable the error handler globally after the upload middleware, or we can just apply it app-wide.
-app.use(handleUploadError);
-
 // ═══════════════════════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════════════════════
@@ -431,6 +428,9 @@ app.post('/api/reclamaciones', (req, res) => {
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
 });
+
+// Enable the error handler globally AFTER all routes
+app.use(handleUploadError);
 
 // Start Server
 app.listen(PORT, () => {
